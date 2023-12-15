@@ -18,6 +18,8 @@ const (
 	Logger Dispatcher = "logger"
 	// ZMQ registers a zmq logger
 	ZMQ Dispatcher = "zmq"
+
+	Nats Dispatcher = "nats"
 )
 
 // BuildTopicName creates a topic from a namespace and a recordName

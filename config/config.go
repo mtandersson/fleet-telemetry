@@ -19,6 +19,7 @@ import (
 	"github.com/teslamotors/fleet-telemetry/datastore/googlepubsub"
 	"github.com/teslamotors/fleet-telemetry/datastore/kafka"
 	"github.com/teslamotors/fleet-telemetry/datastore/kinesis"
+	"github.com/teslamotors/fleet-telemetry/datastore/nats"
 	"github.com/teslamotors/fleet-telemetry/datastore/simple"
 	"github.com/teslamotors/fleet-telemetry/datastore/zmq"
 	"github.com/teslamotors/fleet-telemetry/metrics"
@@ -64,6 +65,8 @@ type Config struct {
 
 	// ZMQ configures a zeromq socket
 	ZMQ *zmq.Config `json:"zmq,omitempty"`
+
+	Nats *nats.Config `json:"nats,omitempty"`
 
 	// Namespace defines a prefix for the kafka/pubsub topic
 	Namespace string `json:"namespace,omitempty"`
@@ -249,6 +252,16 @@ func (c *Config) ConfigureProducers(logger *logrus.Logger) (map[string][]telemet
 			return nil, err
 		}
 		producers[telemetry.ZMQ] = zmqProducer
+	}
+	if _, ok := requiredDispatchers[telemetry.Nats]; ok {
+		if c.Nats == nil {
+			return nil, errors.New("Expected Nats to be configured")
+		}
+		natsProducer, err := nats.NewProducer(context.Background(), c.Nats, c.MetricCollector, c.Namespace, logger)
+		if err != nil {
+			return nil, err
+		}
+		producers[telemetry.Nats] = natsProducer
 	}
 
 	dispatchProducerRules := make(map[string][]telemetry.Producer)
